@@ -1,9 +1,12 @@
 import Router from "@koa/router";
 
-const router = new Router();
+import { workout } from "controllers";
 
-router.listen('o');
+const workoutRouter = new Router({
+  prefix: "/workout",
+});
 
+workoutRouter.get("/", workout.getAllWorkouts);
+workoutRouter.post("/", workout.addWorkout);
 
-// const router = new Router({});
-
+export default workoutRouter;
