@@ -8,5 +8,6 @@ const workoutRouter = new Router({
 
 workoutRouter.get("/", workout.getAllWorkouts);
 workoutRouter.post("/", workout.addWorkout);
+workoutRouter.post("/add_exercise", workout.addExerciseToWorkout);
 
 export default workoutRouter;

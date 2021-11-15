@@ -2,16 +2,63 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log("Start seeding database");
+const MUSCLE_GROUPS = ["Chest", "Back", "Arms", "Legs", "Shoulders"];
+const EXERCISES = [
+  "Bench Press",
+  "Lat Pulldown",
+  "Preacher Curls",
+  "Leg Press",
+  "Dumbell Shoulder Press",
+];
 
-  for (let i = 0; i < 5; i++) {
-    const workout = await prisma.workout.create({
-      data: {},
+async function main() {
+  /*
+    Seed for Muscle Groups
+  */
+
+  await prisma.muscleGroup.deleteMany();
+
+  MUSCLE_GROUPS.forEach(async (x) => {
+    const muscleGroup = await prisma.muscleGroup.create({
+      data: {
+        name: x,
+        color: "red",
+      },
     });
 
-    console.log(`Created Workout with id: ${workout.id}`);
-  }
+    console.log(`Created Muscle Group with id: ${muscleGroup.id}`);
+  });
+
+  /*
+    Seed for Exercises
+  */
+  await prisma.exercise.deleteMany();
+
+  EXERCISES.forEach(async (x, index) => {
+    const exercise = await prisma.exercise.create({
+      data: {
+        name: x,
+        targetMuscleId: index + 1,
+      },
+    });
+
+    console.log(`Created Exercises with id: ${exercise.id}`);
+  });
+
+  /*
+    Seed for Workout
+  */
+  await prisma.workout.deleteMany();
+
+  EXERCISES.forEach(async (x, index) => {
+    const exercise = await prisma.workout.create({
+      data: {
+        caloriesBurned: 12312,
+      },
+    });
+
+    console.log(`Created Exercises with id: ${exercise.id}`);
+  });
 
   console.log("Finished seeding database");
 }

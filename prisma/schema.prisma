@@ -11,7 +11,34 @@ datasource db {
 }
 
 model Workout {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int                    @id @default(autoincrement())
+  dateCreated    DateTime               @default(now())
+  dateExecuted   DateTime?
+  caloriesBurned Int?
+  exercises      ExercisesWorkoutLink[]
+}
+
+model MuscleGroup {
+  id       Int        @id @default(autoincrement())
+  name     String
+  color    String
+  Exercise Exercise[]
+}
+
+model Exercise {
+  id             Int                    @id @default(autoincrement())
+  targetMuscle   MuscleGroup            @relation(fields: [targetMuscleId], references: [id])
+  targetMuscleId Int
+  name           String
+  workouts       ExercisesWorkoutLink[]
+}
+
+model ExercisesWorkoutLink {
+  excersie   Exercise @relation(fields: [exerciseId], references: [id])
+  exerciseId Int
+  workout    Workout  @relation(fields: [workoutId], references: [id])
+  workoutId  Int
+  addDate    DateTime @default(now())
+
+  @@id([exerciseId, workoutId])
 }
