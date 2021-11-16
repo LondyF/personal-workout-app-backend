@@ -31,6 +31,16 @@ model Exercise {
   targetMuscleId Int
   name           String
   workouts       ExercisesWorkoutLink[]
+  sets           Set[]
+}
+
+model Set {
+  id               Int      @id @default(autoincrement())
+  reps             Int
+  weight           Int
+  isPersonalRecord Boolean
+  exercise         Exercise @relation(fields: [exerciseId], references: [id])
+  exerciseId       Int
 }
 
 model ExercisesWorkoutLink {

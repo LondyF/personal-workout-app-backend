@@ -8,7 +8,23 @@ export default class WorkoutController {
   public static async getAllWorkouts(ctx: Context) {
     const workouts = await prisma.workout.findMany({
       include: {
-        exercises: true,
+        exercises: {
+          include: {
+            excersie: {
+              include: {
+                targetMuscle: {
+                  include: {
+                    Exercise: {
+                      include: {
+                        sets: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -32,16 +48,46 @@ export default class WorkoutController {
       },
       data: {
         exercises: {
-          connect: {
-            exerciseId_workoutId: {
-              workoutId: workoutId,
-              exerciseId: exerciseId,
+          create: [
+            {
+              excersie: {
+                connect: {
+                  id: exerciseId,
+                },
+              },
             },
-          },
+          ],
         },
+      },
+      include: {
+        exercises: true,
       },
     });
 
     ctx.body = workout;
+  }
+
+  public static async addSetToExercise(ctx: Context) {
+    const { exerciseId, set } = ctx.request.body;
+
+    const lok = await prisma.exercise.update({
+      where: {
+        id: exerciseId,
+      },
+      data: {
+        sets: {
+          create: [
+            {
+              ...set,
+            },
+          ],
+        },
+      },
+      include: {
+        sets: true,
+      },
+    });
+
+    ctx.body = lok;
   }
 }
