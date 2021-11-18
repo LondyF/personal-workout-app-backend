@@ -2,33 +2,112 @@ import { Context } from "koa";
 
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: [
+    {
+      emit: "stdout",
+      level: "query",
+    },
+    {
+      emit: "stdout",
+      level: "error",
+    },
+    {
+      emit: "stdout",
+      level: "info",
+    },
+    {
+      emit: "stdout",
+      level: "warn",
+    },
+  ],
+});
 
 export default class WorkoutController {
   public static async getAllWorkouts(ctx: Context) {
-    const workouts = await prisma.workout.findMany({
+    // const test = await prisma.set.findMany({
+    //   include: {
+
+    //   }
+    // })
+
+    const a = await prisma.workout.findMany({
+      where: {
+        userId: 1,
+      },
       include: {
+        user: true,
         exercises: {
           include: {
-            excersie: {
-              include: {
-                targetMuscle: {
-                  include: {
-                    Exercise: {
-                      include: {
-                        sets: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            set: true,
+            excersie: true,
           },
         },
       },
     });
 
-    ctx.body = workouts;
+    ctx.body = a;
+  }
+  public static async getWorkoutById(ctx: Context) {
+    const { id } = ctx.params;
+    const workout = await prisma.workout.findUnique({
+      rejectOnNotFound: true,
+      where: {
+        id: Number(id),
+      },
+    });
+
+    ctx.body = workout;
+  }
+
+  // {
+  //   calBurned: 10,
+  //   muscleGroups: [
+  //     {
+  //       totalSets: 1,
+  //       totalReps: 1,
+  //       lastSetWeight: 10,
+  //       lastSetReps: 10,
+  //     }
+  //   ]
+  // }
+
+  public static async getWorkoutOverviewById(ctx: Context) {
+    const { id } = ctx.params;
+    const workout = await prisma.workout.findUnique({
+      rejectOnNotFound: true,
+      include: {
+        exercises: {
+          include: {
+            excersie: {
+              include: {
+                targetMuscle: {},
+              },
+            },
+          },
+        },
+      },
+      where: {
+        id: Number(id),
+      },
+    });
+
+    // const muscleGroups = workout.exercises.map((x) => {
+    //   return {
+    //     // muscleGroup: x.excersie.targetMuscle,
+    //     muscleGroupId: x.excersie.targetMuscleId,
+    //     totalSets: x.excersie.targetMuscle.reduce((acc, curr) => {
+    //       return curr.sets.reduce((ok, test) => {
+    //         return ok + test.reps;
+    //       }, 0);
+    //     }, 0),
+    //   };
+    // });
+
+    ctx.body = {
+      // caloriesBurned: workout.caloriesBurned,
+      // muscleGroups,
+    };
   }
 
   public static async addWorkout(ctx: Context) {
@@ -48,15 +127,7 @@ export default class WorkoutController {
       },
       data: {
         exercises: {
-          create: [
-            {
-              excersie: {
-                connect: {
-                  id: exerciseId,
-                },
-              },
-            },
-          ],
+          create: [],
         },
       },
       include: {
@@ -70,24 +141,23 @@ export default class WorkoutController {
   public static async addSetToExercise(ctx: Context) {
     const { exerciseId, set } = ctx.request.body;
 
-    const lok = await prisma.exercise.update({
-      where: {
-        id: exerciseId,
-      },
-      data: {
-        sets: {
-          create: [
-            {
-              ...set,
-            },
-          ],
-        },
-      },
-      include: {
-        sets: true,
-      },
-    });
+    // const lok = await prisma.workout.update({
+    //   where: {
+    //     id: 1,
+    //   },
+    //   data: {
+    //     exercises: {
+    //       connectOrCreate: {
+    //         where: {
+    //           exerciseId_workoutId: exerciseId,
+    //         },
+    //       },
+    //     },
+    //   },
+    // });
 
-    ctx.body = lok;
+    // const lok = "OK";
+
+    ctx.body = "ok";
   }
 }

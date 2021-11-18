@@ -10,45 +10,56 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int       @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String    @unique
+  workouts  Workout[]
+}
+
 model Workout {
-  id             Int                    @id @default(autoincrement())
-  dateCreated    DateTime               @default(now())
+  id             Int                       @id @default(autoincrement())
+  dateCreated    DateTime                  @default(now())
   dateExecuted   DateTime?
   caloriesBurned Int?
-  exercises      ExercisesWorkoutLink[]
+  exercises      ExercisesWorkoutSetLink[]
+  user           User?                     @relation(fields: [userId], references: [id])
+  userId         Int?
 }
 
 model MuscleGroup {
-  id       Int        @id @default(autoincrement())
-  name     String
-  color    String
-  Exercise Exercise[]
+  id        Int        @id @default(autoincrement())
+  name      String
+  color     String
+  exercises Exercise[]
 }
 
 model Exercise {
-  id             Int                    @id @default(autoincrement())
-  targetMuscle   MuscleGroup            @relation(fields: [targetMuscleId], references: [id])
-  targetMuscleId Int
-  name           String
-  workouts       ExercisesWorkoutLink[]
-  sets           Set[]
+  id                      Int                       @id @default(autoincrement())
+  targetMuscle            MuscleGroup               @relation(fields: [targetMuscleId], references: [id])
+  targetMuscleId          Int
+  name                    String
+  ExercisesWorkoutSetLink ExercisesWorkoutSetLink[]
 }
 
 model Set {
-  id               Int      @id @default(autoincrement())
-  reps             Int
-  weight           Int
-  isPersonalRecord Boolean
-  exercise         Exercise @relation(fields: [exerciseId], references: [id])
-  exerciseId       Int
+  id                   Int                       @id @default(autoincrement())
+  reps                 Int
+  weight               Int
+  isPersonalRecord     Boolean
+  ExercisesWorkoutLink ExercisesWorkoutSetLink[]
 }
 
-model ExercisesWorkoutLink {
+model ExercisesWorkoutSetLink {
   excersie   Exercise @relation(fields: [exerciseId], references: [id])
   exerciseId Int
   workout    Workout  @relation(fields: [workoutId], references: [id])
   workoutId  Int
-  addDate    DateTime @default(now())
+  set        Set      @relation(fields: [setId], references: [id])
+  setId      Int
 
-  @@id([exerciseId, workoutId])
+  addDate DateTime @default(now())
+
+  @@id([exerciseId, workoutId, setId])
 }
