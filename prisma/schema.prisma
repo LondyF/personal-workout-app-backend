@@ -52,7 +52,7 @@ model Set {
 }
 
 model ExercisesWorkoutSetLink {
-  excersie   Exercise @relation(fields: [exerciseId], references: [id])
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
   exerciseId Int
   workout    Workout  @relation(fields: [workoutId], references: [id])
   workoutId  Int

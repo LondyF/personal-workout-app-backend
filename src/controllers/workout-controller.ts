@@ -23,30 +23,64 @@ const prisma = new PrismaClient({
   ],
 });
 
+const groupSetsPerExercise = (exercises: any) => {
+  return exercises.reduce((acc, curr) => {
+    const excersieId = curr.exerciseId;
+    const exerciseIndex = acc.findIndex((x) => x.exerciseId === excersieId);
+    const { set, ...restCur } = curr;
+
+    exerciseIndex >= 0
+      ? acc[exerciseIndex].sets.push(set)
+      : acc.push({
+          ...restCur,
+          sets: [set],
+        });
+
+    return acc;
+  }, []);
+};
+
+const groupSetsPerMuscleGroup = (sets: any) => {
+  return sets.reduce((acc, curr) => {
+    const targetMuscle = curr.excersie.targetMuscle.name.toLowerCase();
+
+    (acc[targetMuscle] = acc[targetMuscle] || []).push(curr);
+
+    return acc;
+  }, {});
+};
+
 export default class WorkoutController {
   public static async getAllWorkouts(ctx: Context) {
-    // const test = await prisma.set.findMany({
-    //   include: {
-
-    //   }
-    // })
-
-    const a = await prisma.workout.findMany({
+    const allWorkouts = await prisma.workout.findMany({
       where: {
         userId: 1,
       },
       include: {
-        user: true,
         exercises: {
           include: {
             set: true,
-            excersie: true,
+            excersie: {
+              include: {
+                targetMuscle: true,
+              },
+            },
           },
         },
       },
     });
 
-    ctx.body = a;
+    const workouts = allWorkouts.map((workout) => {
+      const groupedSets = groupSetsPerExercise(workout.exercises);
+      const exercises = groupSetsPerMuscleGroup(groupedSets);
+
+      return {
+        ...workout,
+        exercises,
+      };
+    });
+
+    ctx.body = workouts;
   }
   public static async getWorkoutById(ctx: Context) {
     const { id } = ctx.params;
@@ -59,18 +93,6 @@ export default class WorkoutController {
 
     ctx.body = workout;
   }
-
-  // {
-  //   calBurned: 10,
-  //   muscleGroups: [
-  //     {
-  //       totalSets: 1,
-  //       totalReps: 1,
-  //       lastSetWeight: 10,
-  //       lastSetReps: 10,
-  //     }
-  //   ]
-  // }
 
   public static async getWorkoutOverviewById(ctx: Context) {
     const { id } = ctx.params;
