@@ -47,7 +47,7 @@ model Set {
   id                   Int                       @id @default(autoincrement())
   reps                 Int
   weight               Int
-  isPersonalRecord     Boolean
+  isPersonalRecord     Boolean                   @default(false)
   ExercisesWorkoutLink ExercisesWorkoutSetLink[]
 }
 

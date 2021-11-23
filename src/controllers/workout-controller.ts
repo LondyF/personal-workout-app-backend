@@ -2,6 +2,8 @@ import { Context } from "koa";
 
 import { PrismaClient } from "@prisma/client";
 
+import { groupSetsPerExercise, groupSetsPerMuscleGroup } from "utils";
+
 const prisma = new PrismaClient({
   log: [
     {
@@ -22,33 +24,6 @@ const prisma = new PrismaClient({
     },
   ],
 });
-
-const groupSetsPerExercise = (exercises: any) => {
-  return exercises.reduce((acc, curr) => {
-    const excersieId = curr.exerciseId;
-    const exerciseIndex = acc.findIndex((x) => x.exerciseId === excersieId);
-    const { set, ...restCur } = curr;
-
-    exerciseIndex >= 0
-      ? acc[exerciseIndex].sets.push(set)
-      : acc.push({
-          ...restCur,
-          sets: [set],
-        });
-
-    return acc;
-  }, []);
-};
-
-const groupSetsPerMuscleGroup = (sets: any) => {
-  return sets.reduce((acc, curr) => {
-    const targetMuscle = curr.excersie.targetMuscle.name.toLowerCase();
-
-    (acc[targetMuscle] = acc[targetMuscle] || []).push(curr);
-
-    return acc;
-  }, {});
-};
 
 export default class WorkoutController {
   public static async getAllWorkouts(ctx: Context) {
@@ -86,12 +61,30 @@ export default class WorkoutController {
     const { id } = ctx.params;
     const workout = await prisma.workout.findUnique({
       rejectOnNotFound: true,
+      include: {
+        exercises: {
+          include: {
+            set: true,
+            excersie: {
+              include: {
+                targetMuscle: true,
+              },
+            },
+          },
+        },
+      },
       where: {
         id: Number(id),
       },
     });
 
-    ctx.body = workout;
+    const groupedSets = groupSetsPerExercise(workout.exercises);
+    const exercises = groupSetsPerMuscleGroup(groupedSets);
+
+    ctx.body = {
+      ...workout,
+      exercises,
+    };
   }
 
   public static async getWorkoutOverviewById(ctx: Context) {
@@ -161,25 +154,31 @@ export default class WorkoutController {
   }
 
   public static async addSetToExercise(ctx: Context) {
-    const { exerciseId, set } = ctx.request.body;
+    const { workoutId, exerciseId, set } = ctx.request.body;
 
-    // const lok = await prisma.workout.update({
-    //   where: {
-    //     id: 1,
-    //   },
-    //   data: {
-    //     exercises: {
-    //       connectOrCreate: {
-    //         where: {
-    //           exerciseId_workoutId: exerciseId,
-    //         },
-    //       },
-    //     },
-    //   },
-    // });
+    const workout = await prisma.workout.update({
+      data: {
+        exercises: {
+          create: {
+            excersie: {
+              connect: {
+                id: exerciseId,
+              },
+            },
+            set: {
+              create: {
+                ...set,
+                isPersonalRecord: false,
+              },
+            },
+          },
+        },
+      },
+      where: {
+        id: workoutId,
+      },
+    });
 
-    // const lok = "OK";
-
-    ctx.body = "ok";
+    ctx.body = workout;
   }
 }
